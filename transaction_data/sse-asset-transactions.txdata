@@ -1,0 +1,44 @@
+[
+    {
+        "transactionName": "sseAssetExists",
+        "transactionLabel": "A test sseAssetExists transaction",
+        "arguments": [
+            "001"
+        ],
+        "transientData": {}
+    },
+    {
+        "transactionName": "createSseAsset",
+        "transactionLabel": "A test createSseAsset transaction",
+        "arguments": [
+            "001",
+            "some value"
+        ],
+        "transientData": {}
+    },
+    {
+        "transactionName": "readSseAsset",
+        "transactionLabel": "A test readSseAsset transaction",
+        "arguments": [
+            "001"
+        ],
+        "transientData": {}
+    },
+    {
+        "transactionName": "updateSseAsset",
+        "transactionLabel": "A test updateSseAsset transaction",
+        "arguments": [
+            "001",
+            "some other value"
+        ],
+        "transientData": {}
+    },
+    {
+        "transactionName": "deleteSseAsset",
+        "transactionLabel": "A test deleteSseAsset transaction",
+        "arguments": [
+            "001"
+        ],
+        "transientData": {}
+    }
+]
