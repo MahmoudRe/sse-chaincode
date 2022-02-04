@@ -75,10 +75,10 @@ export class SseContract extends Contract {
      */
     @Transaction()
     public async storeEncryptedSegmentsJSON(ctx: Context, segmentsStringified: string): Promise<void> {
-        const segments: {key: string, value: string}[] = JSON.parse(segmentsStringified);
+        const segments: {pointer: string, data: string}[] = JSON.parse(segmentsStringified);
 
-        for(const {key, value} of segments) {
-            await this.storeEncryptedSegment(ctx, key, value);
+        for(const {pointer, data} of segments) {
+            await this.storeEncryptedSegment(ctx, pointer, data);
         }
     }
 
@@ -158,14 +158,14 @@ export class SseContract extends Contract {
     // -------- 
 
     @Transaction()
-    public async create(ctx: Context, segmentsKey: string, segmentsValue: string, indicesHashs: string, indicesPointers: string): Promise<void> {
+    public async store(ctx: Context, segmentsKey: string, segmentsValue: string, indicesHashs: string, indicesPointers: string): Promise<void> {
         const p1 = this.storeEncryptedSegments(ctx, segmentsKey, segmentsValue);
         const p2 = this.addIndices(ctx, indicesHashs, indicesPointers);
         await Promise.all([p1, p2]);
     }
 
     @Transaction()
-    public async createJSON(ctx: Context, segmentsStringified: string, indicesStringified: string): Promise<void> {
+    public async storeJSON(ctx: Context, segmentsStringified: string, indicesStringified: string): Promise<void> {
         const p1 = this.storeEncryptedSegmentsJSON(ctx, segmentsStringified);
         const p2 = this.addIndicesJSON(ctx, indicesStringified);
         await Promise.all([p1, p2]);
@@ -178,7 +178,7 @@ export class SseContract extends Contract {
 
         const exists: boolean = await this.exists(ctx, key);
         if (!exists) {
-            throw new Error(`The sse asset ${key} does not exist`);
+            throw new Error(`[404] The sse asset ${key} does not exist`);
         }
         const data: Uint8Array = await ctx.stub.getState(key);
         let pointers: string[] = JSON.parse(data.toString());
@@ -187,7 +187,17 @@ export class SseContract extends Contract {
         return pointers;
 
 
-        // return await Promise.all(encryptedValues);
+        const encryptedValues = pointers.map(async p => {
+            let key = 'ct_' + p;
+            const exists: boolean = await this.exists(ctx, key);
+            if (!exists) {
+                throw new Error(`[500] An encrypted file with the key: ${key} is missing`);
+            }
+            const data: Uint8Array = await ctx.stub.getState(key);
+            return data.toString();
+        });
+        
+        return await Promise.all(encryptedValues);
     }
 
     @Transaction(false)
