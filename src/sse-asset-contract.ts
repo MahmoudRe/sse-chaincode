@@ -174,18 +174,19 @@ export class SseContract extends Contract {
     @Transaction(false)
     @Returns('string[]')
     public async search(ctx: Context, indexHash: string): Promise<string[]> {
-        const key = "ix_" + indexHash;
 
-        const exists: boolean = await this.exists(ctx, key);
-        if (!exists) {
-            throw new Error(`[404] The sse asset ${key} does not exist`);
+        let keywords = indexHash.split(' ');
+        let pointers: string[] = [];
+
+        for(let keyword of keywords) {
+            const key = "ix_" + keyword;
+
+            const exists: boolean = await this.exists(ctx, key);
+            if (!exists) continue;
+            
+            const data: Uint8Array = await ctx.stub.getState(key);
+            pointers = [...new Set([...pointers, ...JSON.parse(data.toString())])];   //merge unique
         }
-        const data: Uint8Array = await ctx.stub.getState(key);
-        let pointers: string[] = JSON.parse(data.toString());
-        pointers = pointers.map(p => 'ct_' + p);
-
-        return pointers;
-
 
         const encryptedValues = pointers.map(async p => {
             let key = 'ct_' + p;
