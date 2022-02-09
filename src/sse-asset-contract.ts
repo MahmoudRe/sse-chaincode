@@ -175,17 +175,39 @@ export class SseContract extends Contract {
     @Returns('string[]')
     public async search(ctx: Context, indexHash: string): Promise<string[]> {
 
-        let keywords = indexHash.split(' ');
+        let queries = indexHash.split('|');  //separate by "OR" operator to union the result at the end
         let pointers: string[] = [];
 
-        for(let keyword of keywords) {
-            const key = "ix_" + keyword;
+        for (let query of queries) {
+            let keywords = query.trim().split(' ');
+            let ptrIntersection: string[] = [];  //pointers intersection
 
-            const exists: boolean = await this.exists(ctx, key);
-            if (!exists) continue;
-            
-            const data: Uint8Array = await ctx.stub.getState(key);
-            pointers = [...new Set([...pointers, ...JSON.parse(data.toString())])];   //merge unique
+            //get the pointers of the first word
+            if(!keywords[0].trim()) continue;
+
+            const exists: boolean = await this.exists(ctx, "ix_" + keywords[0]);
+            if (!exists) continue;    
+
+            const data: Uint8Array = await ctx.stub.getState("ix_" + keywords[0]);
+            ptrIntersection = JSON.parse(data.toString())
+
+            //get the pointers of each words and intersect it with the current pointers of this query
+            for(let keyword of keywords) {
+                const key = "ix_" + keyword.trim();
+    
+                const exists: boolean = await this.exists(ctx, key);
+                if (!exists) {
+                    ptrIntersection = [];
+                    break;
+                }
+                
+                const data: Uint8Array = await ctx.stub.getState(key);
+                
+                ptrIntersection = JSON.parse(data.toString()).filter(value => ptrIntersection.includes(value));
+            }
+
+            //Union the pointers with the previous query
+            pointers = [...new Set([...pointers, ...ptrIntersection])];   // merge unique
         }
 
         const encryptedValues = pointers.map(async p => {
