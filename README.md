@@ -13,13 +13,13 @@ Through [this link](https://github.com/MahmoudRe/sse-app) you can find a full de
 # API v1
 ```ts
 @Transaction(false)
-public async exists(ctx: Context , key: string): Promise <boolean >
+public async exists(ctx: Context, key: string): Promise<boolean>
 
 @Transaction(false)
-public async read(ctx:
+public async read(ctx: Context, key: string): Promise<string>
 
 @Transaction()
-public async write(ctx:
+public async write(ctx: Context, key: string, value: string)
 
 @Transaction()
 public async delete(ctx: Context, key: string)
@@ -57,7 +57,7 @@ The searching specificity is determined by the size of the encrypted segment. In
 The non-JSON version, `storeEncryptedSegments`, accepts two arguments, in which the first argument is the stringified array of keys, and the second one is the stringified array of values. These arrays should be structured such that the `n`"th entry in the keys array corresponds to the `n`"th entry in the values array. 
 
 As for the JSON version, `storeEncryptedSegmentsJSON`, it accepts a stringified array of JSON entries, each entry has `key` and `value` attributes; hence the passed argument looks something like this (before stringifing):
-```ts
+```json
 [
     {
         "key": "POINTER-TO-THIS-SEGMENT",
@@ -93,7 +93,7 @@ Please note that the second arguments by `addToIndex` and `removeFromIndex` tran
 
 Similar to the `encryptedSegment` interface, `addToIndices` and `addToIndicesJSON` transactions are used to store multiple records of secure index table at once. In case of `addToIndicesJSON`, the shape of the stringified JSON arguemnt is as follow:
 
-```ts
+```json
 [
     {
         "hash": "HASHED-KEYWORD",
@@ -109,15 +109,15 @@ Similar to the `encryptedSegment` interface, `addToIndices` and `addToIndicesJSO
 ...
 
 @Transaction()
-public async create(ctx: Context, segmentsKey: string, segmentsValue: string, indicesHashs: string, indicesPointers: string)
+public async store(ctx: Context, segmentsKey: string, segmentsValue: string, indicesHashs: string, indicesPointers: string)
 
 @Transaction()
-public async createJSON(ctx: Context, segmentsStringified: string, indicesStringified: string)
+public async storeJSON(ctx: Context, segmentsStringified: string, indicesStringified: string)
 
 @Transaction()
 public async search(ctx: Context, indexHash: string): Promise<string[]>
 ```
 
-Finally, the high-level functions/transactions shown in this snippet are the needed by the client application for basic SSE . `create` and `createJSON` transactions are used for storing segments and the secure index. All the arguments of `create` are stringified array of strings, expect the `indicesPointers` argument which is a stringified 2-dimentaional array of strings. With respect to `createJSON`, the row arguments are stringified JSON which are arrays of indices and encrypted segments, where the shape of the index or the encrypted segment entry is the same as previously mentioned by `addToIndicesJSON` and `storeEncryptedSegmentsJSON`.
+Finally, the high-level functions/transactions shown in this snippet are the needed by the client application for basic SSE . `store` and `storeJSON` transactions are used for storing segments and the secure index. All the arguments of `store` are stringified array of strings, expect the `indicesPointers` argument which is a stringified 2-dimentaional array of strings. With respect to `storeJSON`, the row arguments are stringified JSON which are arrays of indices and encrypted segments, where the shape of the index or the encrypted segment entry is the same as previously mentioned by `addToIndicesJSON` and `storeEncryptedSegmentsJSON`.
 
 As for `search` transaction, given a trapdoor, i.e. hashed search query (index), it returns list of segments that associated with given the trapdoor.
